@@ -218,7 +218,7 @@ def main_worker(gpu, args):
     dataset = random_split(dataset, [half_size, len(dataset) - half_size])[0]
 
     # 计算训练集和测试集的大小
-    train_size = int(0.95 * len(dataset))
+    train_size = int(0.8 * len(dataset))
     test_size = len(dataset) - train_size
 
     # 使用random_split分割数据集
@@ -257,146 +257,6 @@ def main_worker(gpu, args):
     logger.info('batch_size={:.3f}'.format(args.batch_size))
     logger.info('lr={:.3f}'.format(args.lr))
     logger.info('best acc={:.3f}'.format(best_acc1))
-
-# def calculate_metrics(preds, labels, num_classes):
-#     """
-#     计算语义分割的各种评估指标：mIoU, Pixel Accuracy, Mean Pixel Accuracy, Frequency Weighted IoU
-#     :param preds: 模型预测结果，形状为 (batch_size, height, width)
-#     :param labels: 标签，形状为 (batch_size, height, width)
-#     :param num_classes: 类别数
-#     :return: mIoU, PA, mPA, FWIoU
-#     """
-#     # 初始化指标
-#     ious = []
-#     class_accuracies = []
-#     total_correct = 0
-#     total_pixels = labels.numel()  # 使用标签的总像素数
-#     freq_weighted_iou = 0
-
-#     for i in range(num_classes):
-#         # True Positives (TP), False Positives (FP), False Negatives (FN)
-#         true_positive = ((preds == i) & (labels == i)).sum().item()
-#         false_positive = ((preds == i) & (labels != i)).sum().item()
-#         false_negative = ((preds != i) & (labels == i)).sum().item()
-
-#         # Intersection and Union for IoU
-#         intersection = true_positive
-#         union = true_positive + false_positive + false_negative
-#         if union > 0:  # 避免除以0
-#             iou = intersection / union
-#             ious.append(iou)
-#         else:
-#             ious.append(0)
-
-#         # 类别准确率
-#         total_class_pixels = (labels == i).sum().item()
-#         if total_class_pixels > 0:
-#             class_accuracy = true_positive / total_class_pixels
-#             class_accuracies.append(class_accuracy)
-
-#             # 加权交并比
-#             freq_weighted_iou += total_class_pixels * iou
-#         else:
-#             class_accuracies.append(0)
-
-#         # 总体正确像素数计算
-#         total_correct += true_positive
-
-#     # 平均IoU (mIoU)，排除无效类别
-#     mIoU = np.mean([iou for iou in ious if iou > 0])
-
-#     # 总体像素准确率 (PA)
-#     PA = total_correct / total_pixels
-
-#     # 平均像素准确率 (mPA)，排除无效类别
-#     valid_class_accuracies = [acc for acc in class_accuracies if acc > 0]
-#     if valid_class_accuracies:
-#         mPA = np.mean(valid_class_accuracies)
-#     else:
-#         mPA = 0  # 如果没有有效类别，mPA 为 0
-
-#     # 加权IoU (FWIoU)
-#     FWIoU = freq_weighted_iou / total_pixels
-
-#     return mIoU, PA
-
-
-# def calculate_metrics(preds, labels, num_classes):
-#     """
-#     计算语义分割的各种评估指标：mIoU, Pixel Accuracy, Mean Pixel Accuracy, Frequency Weighted IoU, mF1
-#     :param preds: 模型预测结果，形状为 (batch_size, height, width)
-#     :param labels: 标签，形状为 (batch_size, height, width)
-#     :param num_classes: 类别数
-#     :return: mIoU, PA, mPA, FWIoU, mF1
-#     """
-#     # 初始化指标
-#     ious = []
-#     class_accuracies = []
-#     class_f1s = []  # 新增：存储每个类别的F1-score
-#     total_correct = 0
-#     total_pixels = labels.numel()  # 使用标签的总像素数
-#     freq_weighted_iou = 0
-
-#     for i in range(num_classes):
-#         # True Positives (TP), False Positives (FP), False Negatives (FN)
-#         true_positive = ((preds == i) & (labels == i)).sum().item()
-#         false_positive = ((preds == i) & (labels != i)).sum().item()
-#         false_negative = ((preds != i) & (labels == i)).sum().item()
-
-#         # Intersection and Union for IoU
-#         intersection = true_positive
-#         union = true_positive + false_positive + false_negative
-#         if union > 0:  # 避免除以0
-#             iou = intersection / union
-#             ious.append(iou)
-#         else:
-#             ious.append(0)
-
-#         # 类别像素总数（用于判断该类别是否在标签中存在）
-#         total_class_pixels = (labels == i).sum().item()
-        
-#         if total_class_pixels > 0:
-#             # 类别准确率
-#             class_accuracy = true_positive / total_class_pixels
-#             class_accuracies.append(class_accuracy)
-
-#             # 加权交并比
-#             freq_weighted_iou += total_class_pixels * iou
-
-#             # 新增：计算精确率（Precision）和召回率（Recall）
-#             precision_denominator = true_positive + false_positive
-#             precision = true_positive / precision_denominator if precision_denominator > 0 else 0
-
-#             recall_denominator = true_positive + false_negative
-#             recall = true_positive / recall_denominator if recall_denominator > 0 else 0
-
-#             # 新增：计算F1-score（调和平均）
-#             f1_denominator = precision + recall
-#             f1 = 2 * (precision * recall) / f1_denominator if f1_denominator > 0 else 0
-#             class_f1s.append(f1)
-#         else:
-#             class_accuracies.append(0)
-
-#         # 总体正确像素数计算
-#         total_correct += true_positive
-
-#     # 平均IoU (mIoU)，排除无效类别
-#     mIoU = np.mean([iou for iou in ious if iou > 0])
-
-#     # 总体像素准确率 (PA)
-#     PA = total_correct / total_pixels if total_pixels > 0 else 0
-
-#     # 平均像素准确率 (mPA)，排除无效类别
-#     valid_class_accuracies = [acc for acc in class_accuracies if acc > 0]
-#     mPA = np.mean(valid_class_accuracies) if valid_class_accuracies else 0
-
-#     # 加权IoU (FWIoU)
-#     FWIoU = freq_weighted_iou / total_pixels if total_pixels > 0 else 0
-
-#     # 新增：平均F1-score (mF1)，仅计算标签中存在的类别
-#     mF1 = np.mean(class_f1s) if class_f1s else 0
-
-#     return mIoU, mF1
 
 def calculate_metrics(preds, labels, num_classes):
     """
@@ -497,7 +357,7 @@ def calculate_metrics(preds, labels, num_classes):
     mF1 = np.mean(class_f1s) if class_f1s else 0.0
     # HD95 = np.mean(hd95_list) if hd95_list else 0.0  # 平均所有存在类别的HD95
 
-    return mIoU, PA
+    return mIoU, mPA
 
 def train(train_loader, model, scheduler, criterion,dicefocal, optimizer, epoch, args):
 
@@ -542,8 +402,8 @@ def train(train_loader, model, scheduler, criterion,dicefocal, optimizer, epoch,
 
         out, geo_loss = model(imageA, imageB)
 
-        loss = 1 * criterion(out, target) + 0.5 * dicefocal(out, target) + 1 * geo_loss
-        # loss = 1 * criterion(out, target) + 0.5 * dicefocal(out, target)
+        loss = 1 * criterion(out, target) + 0.5 * dicefocal(out, target) + 0.5 * geo_loss
+      
         output = torch.argmax(out, dim=1)
         mean_iou, accuracy = calculate_metrics(output, target, num_classes=args.numclass)
         train_miou.append(mean_iou)
@@ -726,5 +586,6 @@ def accuracy(output, target, topk=(1,)):
 
 if __name__ == '__main__':
     main()
+
 
 
