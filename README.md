@@ -11,6 +11,8 @@ Multimodal Image Feature Fusion (MIFF) could achieve complementary advantages of
 
 ## Basic caculation in the hyperbolic space
 
+![The overview of the LEAF](e-h-compare.png)
+
 ```
 class HyperbolicUtils(nn.Module):
 
@@ -298,5 +300,11 @@ class HyperbolicAttentionFusion(nn.Module):
 ```
 ## Experiment results
 
+
+
+![The overview of the LEAF](experiment.png)
+
 ![The overview of the LEAF](featurevis.png)
+
+![The overview of the LEAF](discussion.png)
 
